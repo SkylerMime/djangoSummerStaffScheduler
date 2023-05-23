@@ -1,0 +1,4 @@
+/* give the warning messages a red color */
+#warningMessageSpot {
+    color: rgb(193, 73, 8);
+}
