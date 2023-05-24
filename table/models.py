@@ -88,7 +88,7 @@ class Job(models.Model):
 class WeeklyJobAssignment(models.Model):
     """All of the people assigned to do a specific job some specific week"""
     weekNum = models.IntegerField # Should be the same as its parent
-    job = models.OneToOneField(Job)
+    job = models.OneToOneField(Job, on_delete=models.CASCADE)
 
 class WeekOfJobAssignments(models.Model):
     """"Model representing a week's worth of job assignments"""

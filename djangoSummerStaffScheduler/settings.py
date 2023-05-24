@@ -50,7 +50,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "primarydevelopmentsite.urls"
+ROOT_URLCONF = "djangoSummerStaffScheduler.urls"
 
 TEMPLATES = [
     {
@@ -68,7 +68,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "primarydevelopmentsite.wsgi.application"
+WSGI_APPLICATION = "djangoSummerStaffScheduler.wsgi.application"
 
 
 # Database
