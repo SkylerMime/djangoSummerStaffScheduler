@@ -84,3 +84,18 @@ class Job(models.Model):
     # methods
     def __str__(self):
         return f"Job Name: {self.get_jobName_display()}, Job Type: {self.get_jobType_display()}, Forklift Job: {self.isForkliftJob}"
+
+class WeeklyJobAssignment(models.Model):
+    """All of the people assigned to do a specific job some specific week"""
+    weekNum = models.IntegerField # Should be the same as its parent
+    job = models.OneToOneField(Job)
+
+class WeekOfJobAssignments(models.Model):
+    """"Model representing a week's worth of job assignments"""
+    """Equivalent to one element of the schedulingData array on the client-side JavaScript"""
+    weekNum = models.IntegerField
+
+    def getEquivalentJSON(self):
+        """Return the JSON equivalent of the internal data"""
+        
+    
