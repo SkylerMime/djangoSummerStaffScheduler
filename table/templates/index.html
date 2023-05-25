@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 
+{% load static %}
+{% csrf_token %}
+
 <head>
     <title>Summer Staff Scheduling Tool</title>
     <!-- use the basic character set-->
     <meta charset="UTF-8" />
+    <!-- no favicon-->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
     <!-- import Handsontable and ispin css-->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
     <link href="https://unpkg.com/ispin/dist/ispin.css" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'table/styles.css' %}">
 </head>
 
@@ -21,11 +25,6 @@
         <button id="loadButton">Load</button>
         <button id="exportButton">Export</button>
     </div>
-    <!--<div class="controls">
-        <button id="downloadButton">Download Data</button>
-    </div>
-    <input type="file" id="jsonFile" accept=".JSON"/><br>
-    <button id="uploadButton">Upload Data</button>-->
     <!-- Display warning messages-->
     <br><br><br>
     <p id="warningMessageSpot"></p>
@@ -36,8 +35,6 @@
     <script type="text/javascript" src="{% static 'table/header.js' %}"></script>
     {% load static %}
     <script type="text/javascript" src="{% static 'table/main.js' %}"></script>
-    <!--{% load static %}
-    <script type="text/javascript" src="{% static 'table/SummerStaff.js' %}"></script>-->
 </body>
 
 </html>

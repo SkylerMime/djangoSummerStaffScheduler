@@ -2,6 +2,6 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import WeekOfJobAssignments
+from .models import JobAssignments
 
-admin.site.register(WeekOfJobAssignments)
+admin.site.register(JobAssignments)

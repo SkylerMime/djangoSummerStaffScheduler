@@ -1,6 +1,8 @@
 from django.urls import path
-from . import views
+from .views import ajax_get_view, ajax_post_view, index
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', index, name='index'),
+    path('json-job-assignments-get/', ajax_get_view),
+    path('json-job-assignments-post/', ajax_post_view),
 ]

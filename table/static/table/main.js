@@ -1,10 +1,10 @@
 /* Goals:
 
 DONE:
-Implement saving records
+Implement saving records in the database!
 Dropdown checks for duplicates
 Buttons for week and job type switching
-Downloaded files named after the day of the download
+Export files named after the day of the download
 
 GOALS:
 Counting times each SS is scheduled for a certain job over the weeks
@@ -12,6 +12,7 @@ Be able to schedule multiple summer staff for certain jobs, such as floater and 
 Error message: Limit to two forklifting jobs per day (make dismissable)
 Sort people based on skill level for each position
 Export as formatted excel? (Or just make it look nice visually)
+Remember current week in local storage
 */
 
 /*
@@ -27,6 +28,24 @@ const spinnerElement = document.getElementById("weekSpinner");
 const jobTypeElement = document.getElementById("jobTypeButton");
 
 const date = new Date();
+
+// get the security cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
 
 // class declarations
 
@@ -128,20 +147,67 @@ function warning(message) {
     document.getElementById("warningMessageSpot").innerText = message;
 }
 
+// begin from brennantymrak.com and ChatGPT
+
+// Function to fetch data from the server and update the table
+function loadDataFromServer() {
+    fetch('/table/json-job-assignments-get/', {
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => {
+        return response.json()
+    })
+    .then(data => {
+        schedulingData = data["received_data"]["instance"];
+        resetTable();
+    })
+    .catch(error => {
+        console.error('Error loading data:', error);
+        warning('Error loading data. Please try again.');
+    });
+}
+
+// Function to send data to the server and save it.
+function saveDataToServer() {
+    fetch('/table/json-job-assignments-post/', {
+        method: 'POST',
+        mode: 'same-origin', // from HOT example
+        credentials: "include",
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrftoken,
+        },
+        body: JSON.stringify({'post_data': schedulingData}),
+    })
+        .then(response => {
+            if (response.ok) {
+                console.log('Data saved successfully.');
+            } else {
+                console.error('Error saving data:', response.status);
+                warning('Error saving data. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving data:', error);
+            warning('Error saving data. Please try again.');
+        });
+}
+
+// end credit
 
 
 // Scheduling data is the main structure for the data for each week
 // It cannot be directly displayed on the Handsontable
 let schedulingData = [];
-// First we check LocalStorage to see if there was a previous table
-if (!localStorage.getItem("lastSave")) {
-    // If not, initiazlie a blank table
-    for (let weekNum = 0; weekNum < NUMBER_OF_WEEKS; weekNum++) {
-        // initialize each element of the array (each week) with an object of days
-        schedulingData[weekNum] = getWeekAllJobs();
-    }
-} else {
-    schedulingData = JSON.parse(localStorage.getItem("lastSave"));
+
+// Initiazlie a blank table
+for (let weekNum = 0; weekNum < NUMBER_OF_WEEKS; weekNum++) {
+    // initialize each element of the array (each week) with an object of days
+    schedulingData[weekNum] = getWeekAllJobs();
 }
 
 let currentWeek = 0;
@@ -205,6 +271,9 @@ const ssTable = new Handsontable(container, {
     }
 });
 
+loadDataFromServer();
+resetTable();
+
 // // some things must be done every time the table is clicked
 // container.addEventListener("click", () => {
 //     doTableUpdateEvents();
@@ -220,6 +289,8 @@ const spinner = new ISpin(spinnerElement, {
         resetTable();
     }
 });
+
+spinner.value = 1;
 
 // update the job type based on the job switching button
 jobTypeElement.onclick = () => {
@@ -237,19 +308,27 @@ jobTypeElement.onclick = () => {
 };
 
 // save button
-document.getElementById("saveButton").onclick= () => {
-    localStorage.setItem("lastSave", JSON.stringify(schedulingData));
-};
-
+document.getElementById("saveButton").onclick= saveDataToServer;
 // load button
 document.getElementById("loadButton").onclick= () => {
-    if (localStorage.getItem("lastSave")) {
-        schedulingData = JSON.parse(localStorage.getItem("lastSave"));
-        resetTable();
-    } else {
-        warning("No saved data detected");
-    }
+    loadDataFromServer();
+    resetTable();
 };
+
+// // save button
+// document.getElementById("saveButton").onclick= () => {
+//     localStorage.setItem("lastSave", JSON.stringify(schedulingData));
+// };
+
+// // load button
+// document.getElementById("loadButton").onclick= () => {
+//     if (localStorage.getItem("lastSave")) {
+//         schedulingData = JSON.parse(localStorage.getItem("lastSave"));
+//         resetTable();
+//     } else {
+//         warning("No saved data detected");
+//     }
+// };
 
 // export button
 const exportPlugin = ssTable.getPlugin('exportFile');
@@ -297,4 +376,4 @@ document.getElementById("exportButton").onclick= () => {
 //     }
 // }
 
-warning("This is a test error message");
+//warning("This is a test error message");
