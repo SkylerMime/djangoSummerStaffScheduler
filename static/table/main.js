@@ -1,10 +1,10 @@
 /* Goals:
 
 DONE:
-Implement saving records
+Implement saving records in the database!
 Dropdown checks for duplicates
 Buttons for week and job type switching
-Downloaded files named after the day of the download
+Export files named after the day of the download
 
 GOALS:
 Counting times each SS is scheduled for a certain job over the weeks
@@ -12,6 +12,7 @@ Be able to schedule multiple summer staff for certain jobs, such as floater and 
 Error message: Limit to two forklifting jobs per day (make dismissable)
 Sort people based on skill level for each position
 Export as formatted excel? (Or just make it look nice visually)
+Remember current week in local storage
 */
 
 /*
@@ -59,23 +60,30 @@ class WeeklyJobAssignment {
 }
 
 /**
- * Returns an array of job assignments for the week for a specific job, where each element has data for that specific job for every day
+ * Returns an array of job assignments for the week for a specific type, where each element has data for that specific job for every day
  *
- * @param jobType an array of job names for a specific type
- * @return {Array} of job assignments for the week
+ * @param jobNames an array of job names for a specific type
+ * @return {Array} of job assignments for the week of a specific type
 */
-function getWeeklyJobAssignments(jobNames = PLANT_JOBS, dayNames = WORK_DAYS) {
-    const weeklyJobAssignments = [];
+function getOneTypeWeeklyJobAssignments(jobNames = PLANT_JOBS, dayNames = WORK_DAYS) {
+    const oneTypeWeeklyJobAssignments = [];
     for (let jobIndex = 0; jobIndex < jobNames.length; jobIndex++) {
-        weeklyJobAssignments[jobIndex] = new WeeklyJobAssignment(jobIndex, jobNames[jobIndex]);
+        oneTypeWeeklyJobAssignments[jobIndex] = new WeeklyJobAssignment(jobIndex, jobNames[jobIndex]);
     }
-    return weeklyJobAssignments;
+    return oneTypeWeeklyJobAssignments;
 }
 
+/**
+ * Returns an array of 
+ * 
+ * @param {Array} jobTypes the different types of jobs, e.g. "Field", "Plant", "Cleanup". Two-dimensional.
+ * @param {Array} dayNames the work days of the week
+ * @returns {Array} where each element is all the jobs of one type.
+ */
 function getWeekAllJobs(jobTypes = ALL_JOBS, dayNames = WORK_DAYS) {
     const weeklyAllJobAssignments = [];
     for (let jobTypeIndex = 0; jobTypeIndex < jobTypes.length; jobTypeIndex++) {
-        weeklyAllJobAssignments[jobTypeIndex] = getWeeklyJobAssignments(jobTypes[jobTypeIndex]);
+        weeklyAllJobAssignments[jobTypeIndex] = getOneTypeWeeklyJobAssignments(jobTypes[jobTypeIndex]);
     }
     return weeklyAllJobAssignments;
 }
@@ -156,16 +164,19 @@ function loadDataFromServer() {
             'X-Requested-With': 'XMLHttpRequest',
         },
     })
-    .then(response => {
-        return response.json()
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+        return response.json();
     })
-    .then(data => {
-        schedulingData = data["received_data"]["instance"];
+    .then((data) => {
+        schedulingData = data["received_data"];
         resetTable();
     })
-    .catch(error => {
-        console.error('Error loading data:', error);
-        warning('Error loading data. Please try again.');
+    .catch((error) => {
+        console.error(`Error loading data: ${error}`);
+        warning('Error loading data. See developer console for more information.');
     });
 }
 
@@ -271,7 +282,6 @@ const ssTable = new Handsontable(container, {
 });
 
 loadDataFromServer();
-resetTable();
 
 // // some things must be done every time the table is clicked
 // container.addEventListener("click", () => {
