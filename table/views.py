@@ -12,8 +12,8 @@ def index(request):
 def ajax_get_view(request):
     # Get data from the database
     # First, open the JobAssignments object
-    obj = JobAssignments.objects.get_or_create(id=1)
-    schedulingData = obj[0].data
+    obj = JobAssignments.objects.get(id=1)
+    schedulingData = obj.data
     return JsonResponse({"received_data": schedulingData})
 
 def ajax_post_view(request):

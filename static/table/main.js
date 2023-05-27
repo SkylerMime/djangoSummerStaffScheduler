@@ -88,36 +88,80 @@ function getWeekAllJobs(jobTypes = ALL_JOBS, dayNames = WORK_DAYS) {
     return weeklyAllJobAssignments;
 }
 
+// /**
+//  * Returns a column of data (for a single day) after checking rows (of jobs)
+//  * @param {string} dayName the day to filter by
+//  * @param {Array} week the array of job objects for the week
+//  * @returns {Array} of names for the dayName
+//  */
+// function getColumn(dayName, week) {
+//     const column = [];
+//     for (const job of week) {
+//         column.push(job[dayName]);
+//     }
+//     return column;
+// }
+
 /**
- * Returns a column of data (for a single day) after checking rows (of jobs)
- * @param {string} dayName the day to filter by
- * @param {Array} week the array of job objects for the week
- * @returns {Array} of names for the dayName
+ * 
+ * @param {string} jobName the name of the job in this cell
+ * @param {Array} jobsToFilter list of all the jobs to filter through.
+ * @param {Array} conflictsList 
+ * @returns {Array} of all the jobs that have a conflict with this job, excluding this job.
  */
-function getColumn(dayName, week) {
-    const column = [];
-    for (const job of week) {
-        column.push(job[dayName]);
+function getConflictingJobsList(jobName, jobsToFilter = ALL_JOBS_CONCAT, conflictsList = OVERLAPS) {
+    let conflictingJobsList = [];
+    for (overlapPart of conflictsList) {
+        if (overlapPart.includes(jobName)) {
+            conflictingJobsList = conflictingJobsList.concat(overlapPart);
+        }
     }
-    return column;
+    return conflictingJobsList.filter(name => (name !== jobName)); // remove this job from the list
 }
 
 /**
- * Returns an array of weeks,
- * where each element is an arrays of days,
- * where each element is an unused name
- *
- * @return {Array} of weeks of job types of days of unused names, three-dimensional
+ * Get all the summer staff still available for jobs, given a specific list of conflicts
+ * on a specific day for a specific jobType (Plant, Field, or Cleanup).
+ * 
+ * Note: You'll want to include the name in this cell in the finished list to prevent incorrect validation erros.
+ * 
+ * @param {Array} conflictingJobs the jobs that cannot be scheduled at the same time.
+ * @returns {Array} of names that havent't been given jobs of this conflict type today.
  */
-function getUnusedNames(weekIndex, jobTypeIndex, allNames = SS_NAMES, dayNames = WORK_DAYS, numWeeks = NUMBER_OF_WEEKS, numDays = WORK_DAYS.length, data = schedulingData, jobTypes = ALL_JOBS) {
-    const weekOfJobTypeNames = [];
-    for (const dayName of dayNames) {
-        let usedNames = getColumn(dayName, data[weekIndex][jobTypeIndex]);
-        // filter all the names, removing those already used today.
-        weekOfJobTypeNames[dayName] = allNames.filter(name => !usedNames.includes(name));
+function getNonconflictingNames(conflictingJobs, weekIndex, jobTypeIndex, dayName, allNames = SS_NAMES) {
+    const jobsToIterateThrough = schedulingData[weekIndex][jobTypeIndex];
+    const conflictingNames = [];
+    // get the name of the Summer Staff doing each conflicting job today.
+    for (const conflictingJob of conflictingJobs) {
+        // find that job in the jobsToIterateThrough
+        for (const jobObject of jobsToIterateThrough) {
+            if (conflictingJob === jobObject.Job) {
+                // add the Summer Staff for this job today to the list
+                conflictingNames.push(jobObject[dayName]);
+            }
+        }
     }
-    return weekOfJobTypeNames;
+
+    // return the inverse of this list
+    return allNames.filter(name => !conflictingNames.includes(name));
 }
+
+// /**
+//  * Returns an array of weeks,
+//  * where each element is an arrays of days,
+//  * where each element is an unused name
+//  *
+//  * @return {Array} of weeks of job types of days of unused names, three-dimensional
+//  */
+// function getUnusedNames(weekIndex, jobTypeIndex, allNames = SS_NAMES, dayNames = WORK_DAYS, numWeeks = NUMBER_OF_WEEKS, numDays = WORK_DAYS.length, data = schedulingData, jobTypes = ALL_JOBS) {
+//     const weekOfJobTypeNames = [];
+//     for (const dayName of dayNames) {
+//         let usedNames = getColumn(dayName, data[weekIndex][jobTypeIndex]);
+//         // filter all the names, removing those already used today.
+//         weekOfJobTypeNames[dayName] = allNames.filter(name => !usedNames.includes(name));
+//     }
+//     return weekOfJobTypeNames;
+// }
 
 // function downloadData(filename, text) {
 //     const element = document.createElement('a');
@@ -139,14 +183,24 @@ function resetTable() {
     ssTable.updateSettings({
         rowHeaders: currentJobNames
     });
-    unusedNames = getUnusedNames(currentWeek, currentJobType);
+    //unusedNames = getUnusedNames(currentWeek, currentJobType);
 }
 
 /*
 * For the given week, day, and person, count the number of forklift jobs they are scheduled for.
 */
-function countForkliftJobs(weekNum, dayName, personName, jobsToCount = FORKLIFT_JOBS) {
-    // TODO
+function countForkliftJobs(weekNum, dayName, personName, jobsToCount = FORKLIFT_JOBS, jobTypes = ALL_JOBS) {
+    let sum = 0;
+    const allTypesInWeek = schedulingData[weekNum]
+    for (let jobTypeIndex = 0; jobTypeIndex < jobTypes.length; jobTypeIndex++) {
+        for (let jobIndex = 0; jobIndex < jobTypes[jobTypeIndex].length; jobIndex++) {
+            if (allTypesInWeek[jobTypeIndex][jobIndex][dayName] == personName &&
+                (jobsToCount.includes(allTypesInWeek[jobTypeIndex][jobIndex].Job))) {
+                sum++;
+            }
+        }
+    }
+    return sum;
 }
 
 // Simple function for displaying warning messages
@@ -223,14 +277,14 @@ for (let weekNum = 0; weekNum < NUMBER_OF_WEEKS; weekNum++) {
 let currentWeek = 0;
 let currentJobType = 0;
 let currentJobNames = ALL_JOBS[currentJobType];
-let unusedNames = getUnusedNames(currentWeek, currentJobType);
+//let unusedNames = getUnusedNames(currentWeek, currentJobType);
 
 const ssTable = new Handsontable(container, {
     data: schedulingData[currentWeek][currentJobType],
     height: 'auto',
     width: 'auto',
-    colWidths: [100, 100, 100, 100, 100, 100],
-    rowHeaderWidth: 125,
+    colWidths: [175, 175, 175, 175, 175],
+    rowHeaderWidth: 150,
     colHeaders: WORK_DAYS,
     rowHeaders: currentJobNames,
     columns: [
@@ -263,30 +317,46 @@ const ssTable = new Handsontable(container, {
     ],
     licenseKey: 'non-commercial-and-evaluation', // for non-commerical use only
     afterChange: function () {
-        // update the unused names list every time the user clicks on the table
-        unusedNames = getUnusedNames(currentWeek, currentJobType);
-        let colSource;
-        // skip over the column with the job names
-        for (let dayIndex = 0; dayIndex < WORK_DAYS.length; dayIndex++) {
-            colSource = unusedNames[WORK_DAYS[dayIndex]];
-            colSource.unshift(DEFAULT_SS_NAME);
+        // dynamically update the dropdown menus to prevent scheduling summer staff in overlapping jobs.
+        for (let col = 0; col < WORK_DAYS.length; col++) {
             for (let row = 0; row < ALL_JOBS[currentJobType].length; row++) {
-                // update the source to use the filtered list of names
-                this.setCellMeta(row, dayIndex, 'source', colSource);
+                // create the array of conflicts for the job type for this specific job.
+                names = getNonconflictingNames(
+                    getConflictingJobsList(ALL_JOBS[currentJobType][row]),
+                    currentWeek,
+                    currentJobType,
+                    WORK_DAYS[col],
+                );
+                this.setCellMeta(row, col, 'source', names);
             }
         }
 
+        // // update the unused names list every time the user makes a change to the table
+        // unusedNames = getUnusedNames(currentWeek, currentJobType);
+        // let colSource;
+        // // skip over the column with the job names
+        // for (let dayIndex = 0; dayIndex < WORK_DAYS.length; dayIndex++) {
+        //     colSource = unusedNames[WORK_DAYS[dayIndex]];
+        //     colSource.unshift(DEFAULT_SS_NAME);
+        //     for (let row = 0; row < ALL_JOBS[currentJobType].length; row++) {
+        //         // update the source to use the filtered list of names
+        //         this.setCellMeta(row, dayIndex, 'source', colSource);
+        //     }
+        // }
+
+        warning(""); // reset the error after a change
         // check for the warning message for more than two forklift jobs in the current week.
-        // TODO!
+        for (summerStaff of SS_NAMES) {
+            for (day of WORK_DAYS) {
+                if (countForkliftJobs(currentWeek, day, summerStaff) > 2) {
+                    warning(`Warning: ${summerStaff} scheduled for more than two forklift jobs on ${day}`);
+                }
+            }
+        }
     }
 });
 
 loadDataFromServer();
-
-// // some things must be done every time the table is clicked
-// container.addEventListener("click", () => {
-//     doTableUpdateEvents();
-// });
 
 // make the weeks spinner
 const spinner = new ISpin(spinnerElement, {
