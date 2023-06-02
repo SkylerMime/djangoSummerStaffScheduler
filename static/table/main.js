@@ -5,11 +5,11 @@ Implement saving records in the database!
 Dropdown checks for duplicates
 Buttons for week and job type switching
 Export files named after the day of the download
+Error message: Limit to two forklifting jobs per day (make dismissable)
+Be able to schedule multiple summer staff for certain jobs, such as floater and layout forklifts
 
 GOALS:
 Counting times each SS is scheduled for a certain job over the weeks
-Be able to schedule multiple summer staff for certain jobs, such as floater and layout forklifts
-Error message: Limit to two forklifting jobs per day (make dismissable)
 Sort people based on skill level for each position
 Export as formatted excel? (Or just make it look nice visually)
 Remember current week in local storage
@@ -305,8 +305,20 @@ for (let weekNum = 0; weekNum < NUMBER_OF_WEEKS; weekNum++) {
     schedulingData[weekNum] = getWeekAllJobs();
 }
 
+// get the current week and job type from local storage, if applicable
+
 let currentWeek = 0;
+if (localStorage.getItem("lastCurrentWeek")) {
+    currentWeek = Number(localStorage.getItem("lastCurrentWeek"));
+}
+
 let currentJobType = 0;
+if (localStorage.getItem("lastCurrentJobType")) {
+    currentJobType = Number(localStorage.getItem("lastCurrentJobType"));
+}
+
+
+
 let currentJobNames = ALL_JOBS[currentJobType];
 //let unusedNames = getUnusedNames(currentWeek, currentJobType);
 
@@ -421,10 +433,11 @@ const spinner = new ISpin(spinnerElement, {
         // off by one because the first week is [0] internally
         currentWeek = spinner.value - 1;
         resetTable();
+        localStorage.setItem("lastCurrentWeek", currentWeek);
     }
 });
 
-spinner.value = 1;
+spinner.value = currentWeek + 1;
 
 // update the job type based on the job switching button
 jobTypeElement.onclick = () => {
@@ -439,7 +452,16 @@ jobTypeElement.onclick = () => {
         case 2: jobTypeElement.innerHTML = 'Cleanup'; break;
     }
     resetTable();
+    // save to local storage
+    localStorage.setItem("lastCurrentJobType", currentJobType);
 };
+
+// set initial value
+switch (currentJobType) {
+    case 0: jobTypeElement.innerHTML = 'Field'; break;
+    case 1: jobTypeElement.innerHTML = 'Plant'; break;
+    case 2: jobTypeElement.innerHTML = 'Cleanup'; break;
+}
 
 // save button
 document.getElementById("saveButton").onclick= saveDataToServer;
