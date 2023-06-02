@@ -128,22 +128,28 @@ function getConflictingJobsList(jobName, jobsToFilter = ALL_JOBS_CONCAT, conflic
  * @param {Array} conflictingJobs the jobs that cannot be scheduled at the same time.
  * @returns {Array} of names that havent't been given jobs of this conflict type today.
  */
-function getNonconflictingNames(conflictingJobs, weekIndex, jobTypeIndex, dayName, allNames = SS_NAMES) {
+function getNonconflictingSummerStaffObjects(conflictingJobs, weekIndex, jobTypeIndex, dayName, allStaff = SS_CHOSEN_NAMES) {
     const jobsToIterateThrough = schedulingData[weekIndex][jobTypeIndex];
-    const conflictingNames = [];
-    // get the name of the Summer Staff doing each conflicting job today.
+    const conflictingSummerStaff = [];
+    // get the name of the Summer Staffers doing each conflicting job today.
     for (const conflictingJob of conflictingJobs) {
         // find that job in the jobsToIterateThrough
         for (const jobObject of jobsToIterateThrough) {
             if (conflictingJob === jobObject.Job) {
+                // parse this string into every individual id, then add the object to the Summer Staff list
+                arrayOfIds = jobObject[dayName].split(",");
                 // add the Summer Staff for this job today to the list
-                conflictingNames.push(jobObject[dayName]);
-            }
-        }
-    }
+                for (const id of arrayOfIds) {
+                    conflictingSummerStaff.push(
+                        SS_CHOSEN_NAMES[id] // add this SummerStaff object to the list
+                    );
+                } // end for               
+            } // end if
+        } // end for
+    } // end for
 
     // return the inverse of this list
-    return allNames.filter(name => !conflictingNames.includes(name));
+    return allStaff.filter(summerStaff => !conflictingSummerStaff.includes(summerStaff));
 }
 
 // /**
@@ -189,12 +195,12 @@ function resetTable() {
 /*
 * For the given week, day, and person, count the number of forklift jobs they are scheduled for.
 */
-function countForkliftJobs(weekNum, dayName, personName, jobsToCount = FORKLIFT_JOBS, jobTypes = ALL_JOBS) {
+function countForkliftJobs(weekNum, dayName, summerStaffObject, jobsToCount = FORKLIFT_JOBS, jobTypes = ALL_JOBS) {
     let sum = 0;
     const allTypesInWeek = schedulingData[weekNum]
     for (let jobTypeIndex = 0; jobTypeIndex < jobTypes.length; jobTypeIndex++) {
         for (let jobIndex = 0; jobIndex < jobTypes[jobTypeIndex].length; jobIndex++) {
-            if (allTypesInWeek[jobTypeIndex][jobIndex][dayName] == personName &&
+            if (allTypesInWeek[jobTypeIndex][jobIndex][dayName].split(',').includes(summerStaffObject.id.toString()) &&
                 (jobsToCount.includes(allTypesInWeek[jobTypeIndex][jobIndex].Job))) {
                 sum++;
             }
@@ -263,6 +269,31 @@ function saveDataToServer() {
 
 // end credit
 
+// from GitHub
+function customDropdownRenderer(instance, td, row, col, prop, value, cellProperties) {
+    var selectedId;
+    var optionsList = cellProperties.chosenOptions.data;
+
+    if(typeof optionsList === "undefined" || typeof optionsList.length === "undefined" || !optionsList.length) {
+        Handsontable.cellTypes.text.renderer(instance, td, row, col, prop, value, cellProperties);
+        return td;
+    }
+
+    var values = (value + "").split(",");
+    value = [];
+    for (var index = 0; index < optionsList.length; index++) {
+
+        if (values.indexOf(optionsList[index].id + "") > -1) {
+            selectedId = optionsList[index].id;
+            value.push(optionsList[index].label);
+        }
+    }
+    value = value.join(", ");
+
+    Handsontable.cellTypes.text.renderer(instance, td, row, col, prop, value, cellProperties);
+    return td;
+}
+// end credit
 
 // Scheduling data is the main structure for the data for each week
 // It cannot be directly displayed on the Handsontable
@@ -291,28 +322,48 @@ const ssTable = new Handsontable(container, {
         //{ data: 'Job' },
         {
             data: 'Monday',
-            type: 'dropdown',
-            source: SS_NAMES
+            renderer: customDropdownRenderer,
+            editor: "chosen",
+            chosenOptions: {
+                multiple: true,
+                data: SS_CHOSEN_NAMES,
+            }
         },
         {
             data: 'Tuesday',
-            type: 'dropdown',
-            source: SS_NAMES
+            renderer: customDropdownRenderer,
+            editor: "chosen",
+            chosenOptions: {
+                multiple: true,
+                data: SS_CHOSEN_NAMES,
+            }
         },
         {
             data: 'Wednesday',
-            type: 'dropdown',
-            source: SS_NAMES
+            renderer: customDropdownRenderer,
+            editor: "chosen",
+            chosenOptions: {
+                multiple: true,
+                data: SS_CHOSEN_NAMES,
+            }
         },
         {
             data: 'Thursday',
-            type: 'dropdown',
-            source: SS_NAMES
+            renderer: customDropdownRenderer,
+            editor: "chosen",
+            chosenOptions: {
+                multiple: true,
+                data: SS_CHOSEN_NAMES,
+            }
         },
         {
             data: 'Friday',
-            type: 'dropdown',
-            source: SS_NAMES
+            renderer: customDropdownRenderer,
+            editor: "chosen",
+            chosenOptions: {
+                multiple: true,
+                data: SS_CHOSEN_NAMES,
+            }
         }
     ],
     licenseKey: 'non-commercial-and-evaluation', // for non-commerical use only
@@ -321,13 +372,16 @@ const ssTable = new Handsontable(container, {
         for (let col = 0; col < WORK_DAYS.length; col++) {
             for (let row = 0; row < ALL_JOBS[currentJobType].length; row++) {
                 // create the array of conflicts for the job type for this specific job.
-                names = getNonconflictingNames(
-                    getConflictingJobsList(ALL_JOBS[currentJobType][row]),
-                    currentWeek,
-                    currentJobType,
-                    WORK_DAYS[col],
-                );
-                this.setCellMeta(row, col, 'source', names);
+                const newChosenOptions = {
+                    multiple: true,
+                    data: getNonconflictingSummerStaffObjects(
+                        getConflictingJobsList(ALL_JOBS[currentJobType][row]),
+                        currentWeek,
+                        currentJobType,
+                        WORK_DAYS[col],
+                    )
+                };
+                this.setCellMeta(row, col, 'chosenOptions', newChosenOptions);
             }
         }
 
@@ -344,12 +398,13 @@ const ssTable = new Handsontable(container, {
         //     }
         // }
 
-        warning(""); // reset the error after a change
+        warning(""); // reset the error message after a change
+
         // check for the warning message for more than two forklift jobs in the current week.
-        for (summerStaff of SS_NAMES) {
+        for (summerStaff of SS_CHOSEN_NAMES) {
             for (day of WORK_DAYS) {
                 if (countForkliftJobs(currentWeek, day, summerStaff) > 2) {
-                    warning(`Warning: ${summerStaff} scheduled for more than two forklift jobs on ${day}`);
+                    warning(`Warning: ${summerStaff.label} scheduled for more than two forklift jobs on ${day}`);
                 }
             }
         }

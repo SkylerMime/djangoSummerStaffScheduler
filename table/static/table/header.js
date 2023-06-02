@@ -32,32 +32,40 @@ const SS_NAMES = [
 ];
 const DEFAULT_SS_NAME = 'X';
 
+let SS_CHOSEN_NAMES = [];
+for (let i = 0; i < SS_NAMES.length; i++) {
+    SS_CHOSEN_NAMES.push(
+        {id: i,
+        label: SS_NAMES[i]}
+    )
+}
+
 const FIELD_NONFORKLIFT_JOBS = [
     'Field Lead',
-    'Field Assist 1', 'Field Assist 2', 'Field Assist 3', 'Field Assist 4', 'Field Assist 5', 'Field Assist 6',
+    'Field Assist',
     'Plant Cleaning', 'House Cleaning', 'Water Duty'
 ];
 const EARLY_FIELD_FORKLIFT_JOBS = [
-    'Placement 1', 'Placement 2', 'Placement 3',
+    'Placement',
     'Tunnels'
 ];
 const DRIED_FRUIT_PICKUP_FORKLIFT_JOBS = [
-    'DF Pickup FL 1', 'DF Pickup FL 2', 'DF Pickup FL 3',
+    'DF Pickup FL',
 ];
 const LATE_FIELD_FORKLIFT_JOBS = [
-    'Layout Forklift 1', 'Layout Forklift 2', 'Layout Forklift 3', 'Layout Forklift 4',
+    'Layout Forklift',
 ].concat(DRIED_FRUIT_PICKUP_FORKLIFT_JOBS);
 const FIELD_FORKLIFT_JOBS = EARLY_FIELD_FORKLIFT_JOBS.concat(LATE_FIELD_FORKLIFT_JOBS);
 const FIELD_JOBS = FIELD_NONFORKLIFT_JOBS.concat(FIELD_FORKLIFT_JOBS);
 
 const PLANT_NONFORKLIFT_JOBS = [
     'Plant Lead',
-    'Tower 1', 'Tower 2', 'Tower 3',
-    'Stacker 1', 'Stacker 2', 'Stacker 3',
+    'Tower',
+    'Stacker',
     'Speed',
-    'Dried Fruit 1', 'Dried Fruit 2', 'Dried Fruit 3',
+    'Dried Fruit',
     'Auger',
-    'Floater 1', 'Floater 2', 'Floater 3', 'Floater 4', 'Floater 5', 'Floater 6',
+    'Floater',
 ];
 const PLANT_FORKLIFT_JOBS = [
     'Bin Loader','Take Away','Backside','Yard'
@@ -67,8 +75,8 @@ const PLANT_JOBS = PLANT_NONFORKLIFT_JOBS.concat(PLANT_FORKLIFT_JOBS);
 const CLEANUP_JOBS = [
     'Clean-up Lead','Pressure Washer 1','Pressure Washer 2','Pressure Washer 3','Pressure Washer 4','Pressure Washer 5',
     'Area 1 Middle','Area 2 Inspection / Cutters','Area 3 Backside / Stacker',
-    'Sanitizer 1', 'Sanitizer 2',
-    'Broom/Shovel 1', 'Broom/Shovel 2', 'Broom/Shovel 3', 'Broom/Shovel 4',
+    'Sanitizer',
+    'Broom/Shovel',
 ];
 
 const FORKLIFT_JOBS = FIELD_FORKLIFT_JOBS.concat(PLANT_FORKLIFT_JOBS);
