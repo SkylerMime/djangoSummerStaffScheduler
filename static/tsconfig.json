@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+      "outDir": "./table",
+      "target": "ES2022",
+      "baseUrl": "/Users/Skyler",
+      "paths": {
+        "handsontable": ["node_modules/handsontable/index"],
+        "ispin": ["node_modules/ispin/dist"]
+      },
+      "types": [
+        "handsontable",
+        "node",
+      ]
+    },
+    "include": [
+      "./ts_src/**/*",
+      "desc.d.ts",
+    ],
+    "exclude": [
+        "../../../../../../../node_modules/@types/pikaday/index.d.ts",
+    ],
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+}
