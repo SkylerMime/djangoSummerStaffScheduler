@@ -88,20 +88,6 @@ function getWeekAllJobs(jobTypes = ALL_JOBS, dayNames = WORK_DAYS) {
     return weeklyAllJobAssignments;
 }
 
-// /**
-//  * Returns a column of data (for a single day) after checking rows (of jobs)
-//  * @param {string} dayName the day to filter by
-//  * @param {Array} week the array of job objects for the week
-//  * @returns {Array} of names for the dayName
-//  */
-// function getColumn(dayName, week) {
-//     const column = [];
-//     for (const job of week) {
-//         column.push(job[dayName]);
-//     }
-//     return column;
-// }
-
 /**
  * 
  * @param {string} jobName the name of the job in this cell
@@ -152,35 +138,18 @@ function getNonconflictingSummerStaffObjects(conflictingJobs, weekIndex, jobType
     return allStaff.filter(summerStaff => !conflictingSummerStaff.includes(summerStaff));
 }
 
-// /**
-//  * Returns an array of weeks,
-//  * where each element is an arrays of days,
-//  * where each element is an unused name
-//  *
-//  * @return {Array} of weeks of job types of days of unused names, three-dimensional
-//  */
-// function getUnusedNames(weekIndex, jobTypeIndex, allNames = SS_NAMES, dayNames = WORK_DAYS, numWeeks = NUMBER_OF_WEEKS, numDays = WORK_DAYS.length, data = schedulingData, jobTypes = ALL_JOBS) {
-//     const weekOfJobTypeNames = [];
-//     for (const dayName of dayNames) {
-//         let usedNames = getColumn(dayName, data[weekIndex][jobTypeIndex]);
-//         // filter all the names, removing those already used today.
-//         weekOfJobTypeNames[dayName] = allNames.filter(name => !usedNames.includes(name));
-//     }
-//     return weekOfJobTypeNames;
-// }
+function downloadData(filename, text) {
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
 
-// function downloadData(filename, text) {
-//     const element = document.createElement('a');
-//     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-//     element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
 
-//     element.style.display = 'none';
-//     document.body.appendChild(element);
+    element.click();
 
-//     element.click();
-
-//     document.body.removeChild(element);
-// }
+    document.body.removeChild(element);
+}
 
 // reset the table
 function resetTable() {
@@ -397,19 +366,6 @@ const ssTable = new Handsontable(container, {
             }
         }
 
-        // // update the unused names list every time the user makes a change to the table
-        // unusedNames = getUnusedNames(currentWeek, currentJobType);
-        // let colSource;
-        // // skip over the column with the job names
-        // for (let dayIndex = 0; dayIndex < WORK_DAYS.length; dayIndex++) {
-        //     colSource = unusedNames[WORK_DAYS[dayIndex]];
-        //     colSource.unshift(DEFAULT_SS_NAME);
-        //     for (let row = 0; row < ALL_JOBS[currentJobType].length; row++) {
-        //         // update the source to use the filtered list of names
-        //         this.setCellMeta(row, dayIndex, 'source', colSource);
-        //     }
-        // }
-
         warning(""); // reset the error message after a change
 
         // check for the warning message for more than two forklift jobs in the current week.
@@ -471,65 +427,82 @@ document.getElementById("loadButton").onclick= () => {
     resetTable();
 };
 
-// // save button
-// document.getElementById("saveButton").onclick= () => {
-//     localStorage.setItem("lastSave", JSON.stringify(schedulingData));
-// };
-
-// // load button
-// document.getElementById("loadButton").onclick= () => {
-//     if (localStorage.getItem("lastSave")) {
-//         schedulingData = JSON.parse(localStorage.getItem("lastSave"));
-//         resetTable();
-//     } else {
-//         warning("No saved data detected");
-//     }
-// };
-
-// export button
+// for the export button
 const exportPlugin = ssTable.getPlugin('exportFile');
 
-document.getElementById("exportButton").onclick= () => {
-    exportPlugin.downloadFile('csv', {
-        bom: false,
-        columnHeaders: true,
-        exportHiddenColumns: false,
-        exportHiddenRows: false,
-        fileExtension: 'csv',
-        filename: 'Scheduling-Data_[YYYY]-[MM]-[DD]',
-        mimeType: 'text/csv',
-        rowHeaders: true
-    });
-};
+// more button
+const moreButton = document.getElementById("moreButton")
+const exportButton = document.createElement("button");
+const downloadButton = document.createElement("button");
+const fileElement = document.createElement("input");
+const uploadButton = document.createElement("button");
+moreButton.addEventListener('click', () => {
+    if (moreButton.innerText === "More") {
+        // make the extra buttons
 
-// // download button
-// document.getElementById("downloadButton").onclick= () => {
-//     // make today's date
-//     const year = (date.getFullYear() - 2000);
-//     const month = date.getMonth();
-//     const day = date.getDate();
-//     const parsedDate = `${month}-${day}-${year}`;
-//     downloadData(`Schedule_Data_${parsedDate}.JSON`, JSON.stringify(schedulingData));
-// };
+        // export button
+        exportButton.innerText = "Export Table";
+        exportButton.id = "exportButton";
+        exportButton.addEventListener('click', () => {
+            exportPlugin.downloadFile('csv', {
+                bom: false,
+                columnHeaders: true,
+                exportHiddenColumns: false,
+                exportHiddenRows: false,
+                fileExtension: 'csv',
+                filename: 'Scheduling-Data_[YYYY]-[MM]-[DD]',
+                mimeType: 'text/csv',
+                rowHeaders: true
+            });
+        });
+        document.body.appendChild(exportButton);
 
-// upload scheduling data if the user uploads a new file
-// document.getElementById("uploadButton").onclick = () => {
+        // download button
+        downloadButton.innerText = "Download All Data as .JSON";
+        downloadButton.id = "downloadButton";
+        downloadButton.addEventListener('click', () => {
+            // make today's date
+            const year = (date.getFullYear() - 2000);
+            const month = date.getMonth();
+            const day = date.getDate();
+            const parsedDate = `${month}-${day}-${year}`;
+            downloadData(`Schedule_Data_${parsedDate}.JSON`, JSON.stringify(schedulingData));
+        });
+        document.body.appendChild(downloadButton);
 
-//     let fileElement = document.getElementById('jsonFile');
+        // file element and upload button if the user uploads a file
+        fileElement.type = "file";
+        fileElement.id = "jsonFile";
+        fileElement.accept = ".json";
+        document.body.appendChild(fileElement);
 
-//     // check if there is a file selected
-//     if (fileElement.isDefaultNamespace.length === 0) {
-//         alert('please choose a file');
-//     }
-//     else {
-//         // read the file object into a string
-//         let reader = new FileReader();
-//         reader.addEventListener("load", () => {
-//             schedulingData = JSON.parse(reader.result);
-//         });
-//         reader.readAsText(fileElement.files[0]);
-//         resetTable();
-//     }
-// }
+        uploadButton.innerText = "Upload from .JSON File";
+        uploadButton.id = "uploadButton";
+        uploadButton.addEventListener('click', () => {
 
-//warning("This is a test error message");
+            // check if there is a file selected
+            if (fileElement.isDefaultNamespace.length === 0) {
+                alert('please choose a file');
+            }
+            else {
+                // read the file object into a string
+                let reader = new FileReader();
+                reader.addEventListener("load", () => {
+                    schedulingData = JSON.parse(reader.result);
+                });
+                reader.readAsText(fileElement.files[0]);
+                resetTable();
+            }
+        })
+        document.body.appendChild(uploadButton);
+
+        moreButton.innerText = "Less";
+    }
+    else {
+        exportButton.parentElement.removeChild(exportButton);
+        downloadButton.parentElement.removeChild(downloadButton);
+        fileElement.parentElement.removeChild(fileElement);
+        uploadButton.parentElement.removeChild(uploadButton);
+        moreButton.innerText = "More";
+    }
+});
